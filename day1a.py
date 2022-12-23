@@ -1,4 +1,4 @@
-with open('input.txt', 'r') as input:
+with open('day1input.txt', 'r') as input:
     rations = input.readlines()
 
 elfInventory = []
