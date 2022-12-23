@@ -1,4 +1,4 @@
-file = open("input.txt", 'r')
+file = open("day2input.txt", 'r')
 
 strategyGuide = file.readlines()
 score = 0
