@@ -37,9 +37,9 @@ class Folder():
         Folder.numFolders += 1
 
     def print_info(self):
-        #print("Folder Children", self.get_children())
-        #print("Folder Docs: ", self.get_files())
-        print("Folder Size:", self.get_folder_size())
+        print("Folder Children", len(self.get_children()), 
+        "Folder Docs: ", len(self.get_files()), 
+        "Folder Size:", self.get_folder_size())
 
     def get_folder_size(self):
         value = 0
@@ -90,12 +90,15 @@ def buildFileStructure(parcedOutput):
                 folder = root
             elif line[1] == '..':
                 folderString = folderString[:-1]
-                folder = folder.get_parent()
                 if folder != root:
                     folder = folder.get_parent()
             else:
                 folderString = folderString + line[1]
-                #change folder to specified
+                fileName = folderString
+                folderChildren = folder.get_children()
+                for child in folderChildren:
+                    if line[1] == child.get_name():
+                        folder = child
             print(f"Directory Changed To: {folderString} ({folder.get_name()})")
 
         elif line[0] == "Contains Directory":
