@@ -4,6 +4,7 @@ def readfile():
     return terminalOutput
 
 class Folder():
+    _registry = []
 
     def __init__(self, name, path, parent=None):
         self.name = name
@@ -11,6 +12,7 @@ class Folder():
         self.parent = parent
         self.files = []
         self.children = []
+        self._registry.append(self)
         print(f"Directory Added: {self.name}")
     
     def get_name(self):
@@ -37,9 +39,9 @@ class Folder():
     def print_info(self):
         print("Directories: ", len(self.get_children()), 
         "    Files: ", len(self.get_files()), 
-        "    Total Size:", self.get_folder_size())
+        "    Total Size:", self.get_directory_size())
 
-    def get_folder_size(self):
+    def get_directory_size(self):
         value = 0
         for doc in self.files:
             value += doc.get_size()
@@ -98,7 +100,6 @@ def buildFileStructure(parcedOutput):
                 j = 1
                 while j < len(currentFolder):
                     currentFolder.pop(-1)
-                    print(currentFolder)
                     j += 1
                 folder = root
             elif line[1] == '..':
@@ -113,21 +114,49 @@ def buildFileStructure(parcedOutput):
                     if line[1] == child.get_name():
                         folder = child
             folderString = getFolderString(currentFolder)
-            print(f"Directory Changed To: {folder.get_name()}    path: {folder.get_path()}")
+            #print(f"Directory Changed To: {folder.get_name()}    path: {folder.get_path()}")
 
         elif line[0] == "Contains Directory":
             fileName = folderString
             fileName = Folder(line[1], currentFolder, folder)
             folder.add_child(fileName)
-            folder.print_info()
+            #folder.print_info()
             
         elif line[0] == "Contains File":
             document = Document(line[1][1], currentFolder, line[1][0])
             folder.add_file(document)
-            folder.print_info()
+            #folder.print_info()
 
         i += 1
+
+def findChildDirectorySize(directory):
+    children = directory.get_children()
+    childFileSize = 0
+    for child in children:
+        childFileSize += child.get_directory_size()
+        if len(child.get_children()) > 0:
+            childFileSize += findChildDirectorySize(child)
+    return childFileSize
+
+def getAnswer():
+    answer = 0
+    minDirectorySize = 0
+    maxDirectorySize = 100000
+    for folder in Folder._registry:
+        size = folder.get_directory_size()
+        children = folder.get_children()
+        if len(children) == 0:
+            if size >= minDirectorySize and size <= maxDirectorySize:
+                answer += size
+        else:
+            childFileSize = findChildDirectorySize(folder)
+            totalSize = size + childFileSize
+            if totalSize >= minDirectorySize and totalSize <= maxDirectorySize:
+                answer += totalSize
+    return answer
 
 input = readfile()
 parcedOutput = parceTerminalOutput(input)
 buildFileStructure(parcedOutput)
+answer = getAnswer()
+print(answer)
