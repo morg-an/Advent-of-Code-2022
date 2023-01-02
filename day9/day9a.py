@@ -1,221 +1,105 @@
-import math
-
 def readFile():
     with open("day9input.txt", 'r') as fileInput:
         fileInput = fileInput.readlines()
     return fileInput
 
-def parceInput(input):
+def parceInput(directions):
     parcedInput = []
-    for direction in ropeDirections:
+    for direction in directions:
         direction = direction.strip('\n').split()
         direction[1] = int(direction[1])
         parcedInput.append(direction)
     return parcedInput
 
 class Rope:
-    def __init__(self, xHead = 0, yHead = 0, xTail = 0, yTail = 0, tailPath=[[0,0]]):
-        self.xHead = xHead
-        self.yHead = yHead
-        self.xTail = xTail
-        self.yTail = yTail
+    def __init__(self, length = 1, head = [0, 0], tail = [0, 0], tailPath=[(0,0)]):
+        # head & Tail = [horizontal/column/x, vertical/row/y]
+        self.length = length
+        self.head = head
+        self.tail = tail
         self.tailPath = tailPath
-    
+
     def printRopeDetails(self):
-        print(f"Head at row {self.yHead}, column {self.xHead}.")
-        print(f"Tail at row {self.yTail}, column {self.xTail}.")
-    
-    def getXHead(self):
-        return self.xHead
+        print(f"Rope Length: {self.length}")
+        print(f"Head at row {self.head[1]}, column {self.head[0]}.")
+        print(f"Tail at row {self.tail[1]}, column {self.tail[0]}.'\n")
 
-    def getYHead(self):
-        return self.yHead
-    
-    def getXTail(self):
-        return self.xTail
-
-    def getYTail(self):
-        return self.yTail
-
-    def moveHead(self, instructions):
-        print(instructions)
-        moveDirection = instructions[0]
-        moveDistance = instructions[1]
+    def moveHead(self, instruction):
+        moveDirection = instruction[0]
         if moveDirection == 'U':
-            self.yHead += moveDistance
+            self.head[1] += 1
         if moveDirection == 'D':
-            self.yHead -= moveDistance
+            self.head[1] -= 1
         if moveDirection == 'R':
-            self.xHead += moveDistance
+            self.head[0] += 1
         if moveDirection == 'L':
-            self.xHead -= moveDistance
-        print(f"Head at row {self.yHead}, column {self.xHead}.")
+            self.head[0] -= 1
+        #print(f"Moved 1 {moveDirection}: Head now at row {self.head[1]}, column {self.head[0]}.")
+
+    def moveTailHorizontal(self, horizontalDiff):
+        if horizontalDiff < 0:
+            self.tail[0] += 1
+        else:
+            self.tail[0] -= 1
     
-    def moveTail(self, instructions):
-        #find difference
-        xDifference = self.xTail - self.xHead
-        yDifference = self.yTail - self.yHead
-        print(f"xDifference: {xDifference}   yDifference: {yDifference}")
-        if abs(xDifference) > 1 or abs(yDifference) > 1:
+    def moveTailVertical(self, verticalDiff):
+        if verticalDiff < 0:
+            self.tail[1] += 1
+        else:
+            self.tail[1] -= 1
+
+    def appendPath(self):
+        tailLocation = self.tail[0], self.tail[1]
+        #print(f"Tail Location: {tailLocation}")
+        if tailLocation not in self.tailPath:
+            self.tailPath.append(tailLocation)
+        #print(f"Tail Path: {self.tailPath}")
+
+    def tailFollows(self, instruction):
+        lastMoveDirection = instruction[0]
+        horizontalDiff = self.tail[0] - self.head[0]
+        verticalDiff = self.tail[1] - self.head[1]
+        #print(f"Row Diff: {horizontalDiff}, Column Diff: {verticalDiff}")
+        if abs(horizontalDiff) <= self.length and abs(verticalDiff) <= self.length:
+            return
+
+        # if only one axis is different
+        if verticalDiff == 0 and horizontalDiff < 0: #move right
+            self.tail[0] += 1
+        elif verticalDiff == 0 and horizontalDiff > 0: #move left
+            self.tail[0] -= 1
+        elif horizontalDiff == 0 and verticalDiff < 0: #move up
+            self.tail[1] += 1
+        elif horizontalDiff == 0 and verticalDiff > 0: #move down
+            self.tail[1] -= 1
+
+        # if both axis are different
+        else:
+            if lastMoveDirection == 'U':
+                self.tail[1] += 1
+                self.moveTailHorizontal(horizontalDiff)
+            elif lastMoveDirection == 'D':
+                self.tail[1] -= 1
+                self.moveTailHorizontal(horizontalDiff)
+            elif lastMoveDirection == 'R':
+                self.tail[0] += 1
+                self.moveTailVertical(verticalDiff)
+            elif lastMoveDirection == 'L':
+                self.tail[0] -= 1
+                self.moveTailVertical(verticalDiff)
+        self.appendPath()
+
+    def move(self, instructions):
+        for instruction in instructions:
+            numMoves = instruction[1]
             i = 0
-            if yDifference == 0:
-                if xDifference < 0: #move right
-                    numMoves = (xDifference*-1)-1
-                    self.xTail += numMoves
-                    while i < numMoves:
-                        pathStop = [self.xTail-i, self.yTail]
-                        if pathStop not in self.tailPath:
-                            self.tailPath.append(pathStop)
-                        i += 1
-                else: #move left
-                    numMoves = xDifference-1
-                    self.xTail -= numMoves
-                    while i < numMoves:
-                        pathStop = [self.xTail+i, self.yTail]
-                        if pathStop not in self.tailPath:
-                            self.tailPath.append(pathStop)
-                        i += 1
-            elif xDifference == 0:
-                if yDifference < 0: #move up
-                    numMoves = (yDifference*-1)-1
-                    self.yTail += numMoves
-                    while i < numMoves:
-                        pathStop = [self.xTail, self.yTail-i]
-                        if pathStop not in self.tailPath:
-                            self.tailPath.append(pathStop)
-                        i += 1
-                else: # move down
-                    numMoves = yDifference-1
-                    self.yTail -= numMoves
-                    while i < numMoves:
-                        pathStop = [self.xTail, self.yTail+i]
-                        if pathStop not in self.tailPath:
-                            self.tailPath.append(pathStop)
-                        i += 1
-            # move if x and y are both different
-            else:
-                moveDirection = instructions[0]
-                numMovesUp = numMovesDown = numMovesLeft = numMovesRight = None
-                j = 0
+            while i < numMoves:
+                self.moveHead(instruction)
+                self.tailFollows(instruction)
+                i += 1
+        print(f"Tail Path: {self.tailPath} (len = {len(self.tailPath)})\n")
 
-                if moveDirection == 'U':
-                    numMovesUp = abs(yDifference)-2
-                    if xDifference > 0: #left
-                        numMovesLeft = xDifference
-                        while j < numMovesLeft:
-                            pathStop = [self.xTail-1, self.yTail+1]
-                            if pathStop not in self.tailPath:
-                                self.tailPath.append(pathStop)
-                            j += 1
-                    if xDifference < 0: #right
-                        numMovesRight = abs(xDifference)
-                        while j < numMovesRight:
-                            pathStop = [self.xTail+1, self.yTail+1]
-                            if pathStop not in self.tailPath:
-                                self.tailPath.append(pathStop)
-                            j += 1
-                    self.xTail = self.xHead
-                    self.yTail = self.yHead-1
-                    while i < numMovesUp:
-                        pathStop = [self.xTail, self.yTail-i]
-                        if pathStop not in self.tailPath:
-                            self.tailPath.append(pathStop)
-                        i += 1
-
-                elif moveDirection == 'R':
-                    numMovesRight = abs(xDifference)-2
-                    if yDifference > 0: #down
-                        numMovesDown = yDifference
-                        while j < numMovesDown:
-                            pathStop = [self.xTail+1, self.yTail-1]
-                            if pathStop not in self.tailPath:
-                                self.tailPath.append(pathStop)
-                            j += 1
-                    if yDifference < 0: #up
-                        numMovesUp = abs(yDifference)
-                        while j < numMovesUp:
-                            pathStop = [self.xTail+1, self.yTail+1]
-                            if pathStop not in self.tailPath:
-                                self.tailPath.append(pathStop)
-                            j += 1
-                    self.yTail = self.yHead
-                    self.xTail = self.xHead-1
-                    while i < numMovesRight:
-                        pathStop = [self.xTail-i, self.yTail]
-                        if pathStop not in self.tailPath:
-                            self.tailPath.append(pathStop)
-                        i += 1
-
-                elif moveDirection == 'D':
-                    numMovesDown = yDifference -2
-                    if xDifference > 0: #left
-                        numMovesLeft = xDifference
-                        while j < numMovesLeft:
-                            pathStop = [self.xTail-1, self.yTail-1]
-                            if pathStop not in self.tailPath:
-                                self.tailPath.append(pathStop)
-                            j += 1
-                    if xDifference < 0: #right
-                        numMovesRight = abs(xDifference)
-                        while j < numMovesRight:
-                            pathStop = [self.xTail+1, self.yTail-1]
-                            if pathStop not in self.tailPath:
-                                self.tailPath.append(pathStop)
-                            j += 1
-                    self.xTail = self.xHead
-                    self.yTail = self.yHead+1
-                    while i < numMovesDown:
-                        pathStop = [self.xTail, self.yTail+i]
-                        if pathStop not in self.tailPath:
-                            self.tailPath.append(pathStop)
-                        i += 1   
-
-                elif moveDirection == 'L':
-                    numMovesLeft = xDifference -2
-                    if yDifference > 0: #down
-                        numMovesDown = yDifference
-                        while j < numMovesDown:
-                            pathStop = [self.xTail-1, self.yTail-1]
-                            if pathStop not in self.tailPath:
-                                self.tailPath.append(pathStop)
-                            j += 1
-                    if yDifference < 0: #up
-                        numMovesUp = abs(yDifference)
-                        while j < numMovesUp:
-                            pathStop = [self.xTail-1, self.yTail+1]
-                            if pathStop not in self.tailPath:
-                                self.tailPath.append(pathStop)
-                            j += 1
-                    self.yTail = self.yHead
-                    self.xTail = self.xHead+1
-                    while i < numMovesLeft:
-                        pathStop = [self.xTail+i, self.yTail]
-                        if pathStop not in self.tailPath:
-                            self.tailPath.append(pathStop)
-                        i += 1
-
-
-                print(f"Num Moves - Up: {numMovesUp} Down: {numMovesDown} Right: {numMovesRight} Left: {numMovesLeft}")
-
-                if xDifference < 0 and yDifference < 0: # Up & Right - append tailpath
-                    pass
-                elif xDifference > 0 and yDifference > 0: # Down & Left - append tailpath
-                    pass
-                elif xDifference > 0 and yDifference < 0: # Up & Left - append tailpath
-                    pass
-                elif xDifference < 0 and yDifference > 0: # Down & Right - append tailpath
-                    pass
-
-        print(f"Tail at row {self.yTail}, column {self.xTail}.")
-        print(f"Tail Path: {self.tailPath}\n")
-        print(len(self.tailPath))
-
-def moveString(rope, parcedInput):
-    for line in parcedInput:
-        rope.moveHead(line)
-        rope.moveTail(line)
-
-ropeDirections = readFile()
-parcedInput = parceInput(ropeDirections)
+ropeInstructions = readFile()
+parcedInput = parceInput(ropeInstructions)
 rope = Rope()
-moveString(rope, parcedInput)
+rope.move(parcedInput)
