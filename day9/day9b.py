@@ -14,7 +14,6 @@ def parceInput(directions):
 
 class Rope:
     def __init__(self, length = 10, tailPath=[(0,0)], tautSegments = 0):
-        # head & Tail = [horizontal/column/x, vertical/row/y]
         self.length = length
         self.position = []
         i = 0
