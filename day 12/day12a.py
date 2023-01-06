@@ -1,3 +1,7 @@
+import pygame
+import math
+from queue import PriorityQueue
+
 def readFile():
     with open('day12sample.txt', "r") as rawHeightMap:
         heightMap = rawHeightMap.readlines()
@@ -39,3 +43,11 @@ class Node:
 
 heightMap = readFile()
 nodes = generateNodes(heightMap)
+
+#Factors for determining priority:
+# 1. Absolute Distance from Node to End
+# 2. Shortest found path from Start to current Node
+# 3. Absolute Elev change from Node to End
+
+# create a priority list, starting with Start. Look at neighbors.
+# if neighbors are a possible move, determine score to rank. 
