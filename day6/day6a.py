@@ -1,0 +1,35 @@
+def readFile():
+    with open('day6input.txt', 'r') as datastream:
+        datastream = datastream.read()
+    return datastream
+
+def getSubstrings(datastream):
+    i = 3
+    lenData = len(datastream)
+    substrings = []
+    while i < lenData:
+        substrings.append(datastream[i-3:i+1])
+        i += 1
+    return substrings
+
+def findDuplicates(substrings):
+    i = 0
+    while i < len(substrings):
+        unique = True
+        for char in substrings[i]:
+            compareTo = substrings[i].replace(char, "", 1)
+            if char in compareTo:
+                unique = False
+        if unique == True:
+            return i+4 # adding 4 accounts for counting starting at 1 plus 3 for the first three characters before a possible valid marker.
+        i += 1
+    return "no non-duplicate codes"
+    
+
+data = readFile()
+substrings = getSubstrings(data)
+print(substrings)
+print(findDuplicates(substrings))
+
+
+
