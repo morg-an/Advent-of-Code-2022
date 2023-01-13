@@ -11,7 +11,7 @@ colors = {'WHITE':(255, 255, 255), 'a':(237, 237, 237), 'b':(226, 227, 229), 'c'
 'y':(22, 22, 24), 'z':(11, 11, 11),'BLACK':(0, 0, 0), 'GREEN':(171, 247, 177), 'PURPLE':(52, 0, 61)}
 
 def readFile():
-    with open('day12input.txt', "r") as rawHeightMap:
+    with open('day12sample.txt', "r") as rawHeightMap:
         heightMap = rawHeightMap.readlines()
         for i in range(len(heightMap)):
             heightMap[i] = heightMap[i].strip()
@@ -69,8 +69,13 @@ def generateNodes(heightMap, width, height):
     return (start, end)
 
 def drawDisplay(heightMap):
-    height = 500
-    width = 800
+    targetHeight = 500
+    targetWidth = 800
+    excessHeight = targetHeight % len(heightMap)
+    excessWidth = targetWidth % len(heightMap[0])
+    height = targetHeight - excessHeight
+    width = targetWidth - excessWidth
+    
     window = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Hill Climbing Algorithm")
     return [window, width, height]
@@ -115,7 +120,7 @@ def estimateDistance(p1, p2):
 class Node:
     grid = []
 
-    def __init__(self, row, col, elev, width, height, start = False, end = False, above = None, below = None, right = None, left = None):
+    def __init__(self, row, col, elev, width, height, start = False, end = False):
         self.row = row
         self.col = col
         self.elev = elev
@@ -126,10 +131,29 @@ class Node:
         self.color = colors['WHITE']
         self.start = start
         self.end = end
-        self.above = above
-        self.below = below
-        self.right = right
-        self.left = left
+
+        #if not in top row, set above to tile in same column as prior row.
+        if row > 0:
+            self.above = Node.grid[row-1][col]
+        else:
+            self.above = None
+
+        #set the below value of the row above to the current tile.
+        self.below = None
+        if row > 0:
+            Node.grid[row-1][col].below = self
+
+        # if not in first column, set value of left to the object to the left
+        if col > 0:
+            self.left = Node.grid[row][col-1]
+        else:
+            self.left = None
+
+        #set the 'right' value of the tile to the left of the current tile to self.
+        self.right = None
+        if col > 0:
+            Node.grid[row][col-1].right = self
+
         Node.grid[row].append(self)
 
     def getPosition(self):
