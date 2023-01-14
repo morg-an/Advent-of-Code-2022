@@ -28,6 +28,7 @@ def main():
     start = keyNodes[0]
     end = keyNodes[1]
 
+    findPath(Node.grid, start, end)
     run = True
     started = False
 
@@ -49,23 +50,24 @@ def generateNodes(heightMap, width, height):
     nodeHeight = height//rows
     start = ""
     end = ""
-    for i in range(rows): #iterate rows - bottom to top
-        row = heightMap[(i + 1)*-1]
+    for i in range(rows):
         Node.grid.append([])
-        for j in range(len(row)): #iterate columns - left to right
-            node = Node(i, j, row[j], nodeWidth, nodeHeight)
-            if row[j] in colors:
-                node.color = colors[row[j]]
-            elif row[j] == 'S':
+    for i in range(rows):
+        rowContents = heightMap[i]
+        for j in range(len(rowContents)): #iterate columns - left to right
+            node = Node(rows-i-1, j, rows, columns, rowContents[j], nodeWidth, nodeHeight)
+            if rowContents[j] in colors:
+                node.color = colors[rowContents[j]]
+            elif rowContents[j] == 'S':
                 node.start = True
                 node.elev = 'a'
                 node.color = colors['GREEN']
-                start = (j, row)
-            elif row[j] == 'E':
+                start = node
+            elif rowContents[j] == 'E':
                 node.end = True
                 node.elev = 'z'
                 node.color = colors['PURPLE']
-                end = (j, row)
+                end = node
     return (start, end)
 
 def drawDisplay(heightMap):
@@ -106,10 +108,6 @@ def draw(window, heightMap, width, height):
     #update display
     pygame.display.update()
 
-def mapAdjacentNodes():
-    #write a function to relate each node above, below, and to each side
-    pass
-
 def estimateDistance(p1, p2):
     #stimate the distance between two points
     x1, y1 = p1
@@ -117,43 +115,63 @@ def estimateDistance(p1, p2):
     return abs(x1-x2) + abs(y1-y2)
     pass
 
+def findPath(grid, start, end):
+    minSteps = 0
+    priorityList = []
+    priorityList.append(start)
+    adjacent = getAdjacent(priorityList[0])
+    print(adjacent)
+
+    return minSteps
+
+def getAdjacent(node):
+    adjacent = {}
+    print('current: ', node, ord(node.elev.lower()))
+    currentElev = ord(node.elev.lower())
+    if node.right != None:
+        print('right: ', ord(node.right.elev.lower()))
+        if ord(node.right.elev.lower())-currentElev <= 1:
+            adjacent['right'] = node.right
+            print('adjacent:', adjacent)
+    if node.left != None:
+        if ord(node.left.elev.lower())-currentElev <= 1:
+            adjacent['left'] = node.left
+    if node.above != None:
+        if ord(node.above.elev.lower())-currentElev <= 1:
+            adjacent['above'] = node.above
+    if node.below != None:
+        if ord(node.below.elev.lower())-currentElev <= 1:
+            adjacent['below'] = node.below
+    return adjacent
+
 class Node:
     grid = []
 
-    def __init__(self, row, col, elev, width, height, start = False, end = False):
+    def __init__(self, row, col, numRows, numColumns, elev, width, height, start = False, end = False):
         self.row = row
         self.col = col
         self.elev = elev
         self.width = width
         self.height = height
         self.xCoord = col * width
-        self.yCoord = row * height
+        self.yCoord = abs(row-(numRows-1)) * height
         self.color = colors['WHITE']
         self.start = start
         self.end = end
-
-        #if not in top row, set above to tile in same column as prior row.
-        if row > 0:
-            self.above = Node.grid[row-1][col]
-        else:
-            self.above = None
-
-        #set the below value of the row above to the current tile.
         self.below = None
-        if row > 0:
-            Node.grid[row-1][col].below = self
-
-        # if not in first column, set value of left to the object to the left
-        if col > 0:
-            self.left = Node.grid[row][col-1]
-        else:
-            self.left = None
-
-        #set the 'right' value of the tile to the left of the current tile to self.
         self.right = None
-        if col > 0:
+        # if not in top row, set self.above for current tile and self.below for tile directly above self.
+        if row == numRows - 1:
+            self.above = None
+        else:
+            self.above = Node.grid[row+1][col]
+            Node.grid[row+1][col].below = self            
+        # if not in first column, set self.left to node on left and self.right for the node directly to the left of self.
+        if col == 0:
+            self.left = None
+        else:
+            self.left = Node.grid[row][col-1]
             Node.grid[row][col-1].right = self
-
         Node.grid[row].append(self)
 
     def getPosition(self):
