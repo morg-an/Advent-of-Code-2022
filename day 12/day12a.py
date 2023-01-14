@@ -23,15 +23,14 @@ def main():
     window = display[0]
     width = display[1]
     height = display[2]
-    keyNodes = generateNodes(heightMap, width, height)
-
+    keyNodes = generateNodes(heightMap, width, height) #creates all nodes and returns start and end as tuple
     start = keyNodes[0]
     end = keyNodes[1]
-
     findPath(Node.grid, start, end)
+
+
     run = True
     started = False
-
     while run:
         draw(window, heightMap, width, height)
         for event in pygame.event.get():
@@ -116,32 +115,33 @@ def estimateDistance(p1, p2):
     pass
 
 def findPath(grid, start, end):
-    minSteps = 0
     priorityList = []
-    priorityList.append(start)
-    adjacent = getAdjacent(priorityList[0])
-    print(adjacent)
-
+    minSteps = 0
+    currentNode = start
+    currentCoord = [start.row, start.col, ord(start.elev.lower())]
+    endCoord = [end.row, end.col, ord(end.elev.lower())]
+    nextAdjacent = getAdjacent(currentNode) #Takes the current location and returns possible next steps
+    for adjacent in nextAdjacent:
+        adjacentCoord = [adjacent.row, adjacent.col, ord(adjacent.elev.lower())]
+        proxScore = abs(endCoord[0]-adjacentCoord[0])+abs(endCoord[1]-adjacentCoord[1])+abs(endCoord[2]-adjacentCoord[2])
+        print(proxScore)
     return minSteps
 
 def getAdjacent(node):
-    adjacent = {}
-    print('current: ', node, ord(node.elev.lower()))
+    adjacent = []
     currentElev = ord(node.elev.lower())
     if node.right != None:
-        print('right: ', ord(node.right.elev.lower()))
         if ord(node.right.elev.lower())-currentElev <= 1:
-            adjacent['right'] = node.right
-            print('adjacent:', adjacent)
+            adjacent.append(node.right)
     if node.left != None:
         if ord(node.left.elev.lower())-currentElev <= 1:
-            adjacent['left'] = node.left
+            adjacent.append(node.left)
     if node.above != None:
         if ord(node.above.elev.lower())-currentElev <= 1:
-            adjacent['above'] = node.above
+            adjacent.append(node.above)
     if node.below != None:
         if ord(node.below.elev.lower())-currentElev <= 1:
-            adjacent['below'] = node.below
+            adjacent.append(node.below)
     return adjacent
 
 class Node:
