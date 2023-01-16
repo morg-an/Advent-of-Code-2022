@@ -11,7 +11,7 @@ colors = {'WHITE':(255, 255, 255), 'a':(237, 237, 237), 'b':(226, 227, 229), 'c'
 'y':(22, 22, 24), 'z':(11, 11, 11),'BLACK':(0, 0, 0), 'GREEN':(171, 247, 177), 'PURPLE':(52, 0, 61)}
 
 def readFile():
-    with open('day12sample.txt', "r") as rawHeightMap:
+    with open('day12input.txt', "r") as rawHeightMap:
         heightMap = rawHeightMap.readlines()
         for i in range(len(heightMap)):
             heightMap[i] = heightMap[i].strip()
@@ -26,7 +26,7 @@ def main():
     keyNodes = generateNodes(heightMap, width, height) #creates all nodes and returns start and end as tuple
     start = keyNodes[0]
     end = keyNodes[1]
-    findPath(Node.grid, start, end)
+    findPath(start, end)
 
 
     run = True
@@ -114,40 +114,36 @@ def estimateDistance(p1, p2):
     return abs(x1-x2) + abs(y1-y2)
     pass
 
-def findPath(grid, start, end):
-    priorityList = []
+def findPath(start, end):
     minSteps = 0
-    currentNode = start
+    priorityList = [start]
+    while len(priorityList) > 0:
+        currentNode = priorityList[0]
+        #print("Searching: ", currentNode)
+        print("Full List: ", priorityList)
+        if currentNode.end == True:
+            print("You found the end!")
+            return True
+        if currentNode.inPriorityList == True:
+            del priorityList[0]
+            continue
+        currentNode.inPriorityList = True #prevent infinite loop re-searching prior tiles
+        nextNodes = currentNode.getTraversable()
+        #print("Next Nodes: ", nextNodes)
+        for node in nextNodes:
+            priorityList.append(node)
+        del priorityList[0]
+    print("There is no possible path.")
+    return False
+
     currentCoord = [start.row, start.col, ord(start.elev.lower())]
     endCoord = [end.row, end.col, ord(end.elev.lower())]
-    nextAdjacent = getAdjacent(currentNode) #Takes the current location and returns possible next steps
-    for adjacent in nextAdjacent:
-        adjacentCoord = [adjacent.row, adjacent.col, ord(adjacent.elev.lower())]
-        proxScore = abs(endCoord[0]-adjacentCoord[0])+abs(endCoord[1]-adjacentCoord[1])+abs(endCoord[2]-adjacentCoord[2])
-        print(proxScore)
     return minSteps
-
-def getAdjacent(node):
-    adjacent = []
-    currentElev = ord(node.elev.lower())
-    if node.right != None:
-        if ord(node.right.elev.lower())-currentElev <= 1:
-            adjacent.append(node.right)
-    if node.left != None:
-        if ord(node.left.elev.lower())-currentElev <= 1:
-            adjacent.append(node.left)
-    if node.above != None:
-        if ord(node.above.elev.lower())-currentElev <= 1:
-            adjacent.append(node.above)
-    if node.below != None:
-        if ord(node.below.elev.lower())-currentElev <= 1:
-            adjacent.append(node.below)
-    return adjacent
 
 class Node:
     grid = []
 
-    def __init__(self, row, col, numRows, numColumns, elev, width, height, start = False, end = False):
+    def __init__(self, row, col, numRows, numColumns, elev, width, height):
         self.row = row
         self.col = col
         self.elev = elev
@@ -156,8 +152,9 @@ class Node:
         self.xCoord = col * width
         self.yCoord = abs(row-(numRows-1)) * height
         self.color = colors['WHITE']
-        self.start = start
-        self.end = end
+        self.start = False
+        self.end = False
+        self.inPriorityList = False
         self.below = None
         self.right = None
         # if not in top row, set self.above for current tile and self.below for tile directly above self.
@@ -172,6 +169,7 @@ class Node:
         else:
             self.left = Node.grid[row][col-1]
             Node.grid[row][col-1].right = self
+        self.traversable = []
         Node.grid[row].append(self)
 
     def getPosition(self):
@@ -179,6 +177,18 @@ class Node:
 
     def draw(self, window):
         pygame.draw.rect(window, self.color, (self.xCoord, self.yCoord, self.width, self.height))
+
+    def getTraversable(self):
+        currentElev = ord(self.elev.lower())
+        if self.right != None and ord(self.right.elev.lower())-currentElev <= 1 and self.right.inPriorityList == False: # right
+            self.traversable.append(self.right)
+        if self.left != None and ord(self.left.elev.lower())-currentElev <= 1 and self.left.inPriorityList == False: # left
+            self.traversable.append(self.left)
+        if self.above != None and ord(self.above.elev.lower())-currentElev <= 1 and self.above.inPriorityList == False: # above
+            self.traversable.append(self.above)
+        if self.below != None and ord(self.below.elev.lower())-currentElev <= 1 and self.below.inPriorityList == False: # below
+            self.traversable.append(self.below)
+        return self.traversable
 
 main()
 
