@@ -11,7 +11,7 @@ colors = {'WHITE':(255, 255, 255), 'a':(237, 237, 237), 'b':(226, 227, 229), 'c'
 'y':(22, 22, 24), 'z':(11, 11, 11),'BLACK':(0, 0, 0), 'GREEN':(171, 247, 177), 'PURPLE':(52, 0, 61)}
 
 def readFile():
-    with open('day12input.txt', "r") as rawHeightMap:
+    with open('day12tests.txt', "r") as rawHeightMap:
         heightMap = rawHeightMap.readlines()
         for i in range(len(heightMap)):
             heightMap[i] = heightMap[i].strip()
@@ -26,19 +26,16 @@ def main():
     keyNodes = generateNodes(heightMap, width, height) #creates all nodes and returns start and end as tuple
     start = keyNodes[0]
     end = keyNodes[1]
-    findPath(start, end)
-
 
     run = True
-    started = False
     while run:
         draw(window, heightMap, width, height)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-
-            if started: #eventually will use to prevent user input while algorithm is running
-                continue
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    findPath(start, end)
 
     pygame.quit()
 
@@ -118,11 +115,16 @@ def findPath(start, end):
     minSteps = 0
     priorityList = [start]
     while len(priorityList) > 0:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
         currentNode = priorityList[0]
         #print("Searching: ", currentNode)
         print("Full List: ", priorityList)
         if currentNode.end == True:
             print("You found the end!")
+            #next step is reconstructing the path
+            reconstructPath()
             return True
         if currentNode.inPriorityList == True:
             del priorityList[0]
@@ -139,6 +141,9 @@ def findPath(start, end):
     currentCoord = [start.row, start.col, ord(start.elev.lower())]
     endCoord = [end.row, end.col, ord(end.elev.lower())]
     return minSteps
+
+def reconstructPath():
+    pass
 
 class Node:
     grid = []
